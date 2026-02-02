@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FA10CAFE2F30A1BA00258B0F /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = FA10CAFD2F30A1BA00258B0F /* ComposableArchitecture */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		FA10CAEE2F30A18E00258B0F /* Hush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hush.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA10CAFE2F30A1BA00258B0F /* ComposableArchitecture in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = Hush;
 			packageProductDependencies = (
+				FA10CAFD2F30A1BA00258B0F /* ComposableArchitecture */,
 			);
 			productName = Hush;
 			productReference = FA10CAEE2F30A18E00258B0F /* Hush.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = FA10CAE52F30A18E00258B0F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FA10CAFC2F30A1BA00258B0F /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FA10CAEF2F30A18E00258B0F /* Products */;
 			projectDirPath = "";
@@ -332,6 +341,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FA10CAFC2F30A1BA00258B0F /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.23.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FA10CAFD2F30A1BA00258B0F /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA10CAFC2F30A1BA00258B0F /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FA10CAE62F30A18E00258B0F /* Project object */;
 }
