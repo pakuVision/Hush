@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		FA10CAFE2F30A1BA00258B0F /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = FA10CAFD2F30A1BA00258B0F /* ComposableArchitecture */; };
+		FA10CB002F30A43400258B0F /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = FA10CAFF2F30A42E00258B0F /* CLAUDE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		FA10CAEE2F30A18E00258B0F /* Hush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hush.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA10CAFF2F30A42E00258B0F /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -37,6 +39,7 @@
 		FA10CAE52F30A18E00258B0F = {
 			isa = PBXGroup;
 			children = (
+				FA10CAFF2F30A42E00258B0F /* CLAUDE.md */,
 				FA10CAF02F30A18E00258B0F /* Hush */,
 				FA10CAEF2F30A18E00258B0F /* Products */,
 			);
@@ -118,6 +121,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA10CB002F30A43400258B0F /* CLAUDE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
