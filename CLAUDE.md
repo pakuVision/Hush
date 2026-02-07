@@ -1,214 +1,104 @@
-# Architecture Rules
+# Project Overview
+# 프로젝트 개요
 
-This project strictly follows The Composable Architecture (TCA).
+**Hush**: Location-based Screen Time enforcement app
+**Hush**: 위치 기반 스크린 타임 강제 실행 앱
 
-- SwiftUI Views are a function of State.
-  
-- Views may send Actions but must not contain business logic.
-  
-- Reducers are the only place where state mutations occur.
-  
-- Reducers must be pure and synchronous.
-  
-- Side effects must be implemented as Effects using `.run`.
-  
-- Dependencies must be accessed using `@Dependency` wrapper.
-  
-- State is the single source of truth for the entire feature.
+## Core Concept
+## 핵심 컨셉
 
----
+When user enters a registered geofence area (200m radius):
+- Automatically blocks pre-configured apps or categories using Screen Time API
+- Blocks remain active while inside the geofence
+- Automatically unblocks when user exits the area
 
-# View Rules
+사용자가 등록된 지오펜스 영역(반경 200m)에 진입하면:
+- 미리 설정한 앱 또는 카테고리를 Screen Time API로 자동 차단
+- 지오펜스 내부에 있는 동안 차단 유지
+- 영역을 벗어나면 자동으로 차단 해제
 
-- Views must never perform data fetching directly.
-  
-- Views must not contain async business logic.
-  
-- Use `.task` modifier to send task actions on appear.
-  
-- Views must not mutate state directly.
-  
-- Avoid `onAppear` for logic; prefer `.task`.
-  
-- Views must be fully driven by State.
+## Key Features (MVP)
+## 핵심 기능 (MVP)
 
----
-
-# Reducer Rules (Critical)
-
-Reducers must remain pure and synchronous.
-
-- Never use `await` inside reducer cases.
-  
-- Never call async functions directly from reducers.
-  
-- Async work must be wrapped inside `.run`.
-  
-- Results of async work must be returned via actions.
-  
-- Reducers are responsible only for state transitions.
-
-**Example:**
-```swift
-// ✅ Correct: Effect with .run
-// ✅ 올바른 방법: .run을 사용한 Effect
-case .fetchData:
-  return .run { send in
-    let data = try await apiClient.fetch()
-    await send(.dataLoaded(data))
-  }
-
-// ❌ Wrong: Async in reducer
-// ❌ 잘못된 방법: Reducer 안에서 async 사용
-case .fetchData:
-  let data = await apiClient.fetch() // ❌ Never do this!
-  state.data = data
-  return .none
-```
+1. Geofence registration (location + radius)
+   // 지오펜스 등록 (위치 + 반경)
+   
+2. App/Category selection for blocking
+   // 차단할 앱/카테고리 선택
+   
+3. Background location monitoring
+   // 백그라운드 위치 모니터링
+   
+4. Automatic Screen Time control
+   // 자동 스크린 타임 제어
 
 ---
 
-# Side Effects & Dependencies
+## TCA Architecture Folder Rules (Very Important)
 
-- All side effects must be implemented via `.run`.
-  
-- Dependencies must be injected using `@Dependency` wrapper.
-  
-- No singleton managers. Use dependency injection instead.
-  
-- Reducers must not directly access external services.
-  
-- Always handle cancellation using `.cancellable(id:)` for long-running effects.
-  > 장시간 실행되는 effect는 항상 `.cancellable(id:)`를 사용하여 취소 가능하게 만드세요
+This project strictly follows **Feature-oriented folder structure** based on
+The Composable Architecture (TCA).
 
-**Example:**
-```swift
-// Dependency 정의
-@DependencyClient
-struct LocationClient {
-  var startMonitoring: () async throws -> AsyncStream<CLLocation>
-  var stopMonitoring: () async -> Void
-}
+Do NOT suggest or generate MVVM style folder structures such as:
+- Views/
+- ViewModels/
+- Models/
 
-// Reducer에서 사용
-@Dependency(\.locationClient) var locationClient
+These are considered incorrect for this project.
 
-case .startLocationTracking:
-  return .run { send in
-    for await location in try await locationClient.startMonitoring() {
-      await send(.locationUpdated(location))
-    }
-  }
-  .cancellable(id: CancelID.location)
-```
+### Core Principle
 
----
+In TCA, a Feature is a self-contained unit that includes:
 
-# Composition & Scope
+- State
+- Action
+- Reducer
+- View
 
-- Use `Scope` to integrate child features.
-  
-- Parent reducers compose child reducers using `Scope(state:action:)`.
-  
-- Child features must be self-contained and independently testable.
-  
-- Use `ifLet` or `forEach` for optional or collection child states.
+All of these MUST live together in the same Feature folder.
 
----
+### Required Folder Structure
 
-# Navigation Rules
+App structure must look like this:
 
-- Use `@Presents` for optional child state (sheets, alerts, popovers).
-  
-- Navigation state must be part of parent State.
-  
-- Never perform navigation outside of state mutations.
+App/
+├── AppFeature/
+├── Core/
+├── Shared/
+├── Features/
 
-**Example:**
-```swift
-@Reducer
-struct ParentFeature {
-  @ObservableState
-  struct State {
-    @Presents var destination: Destination.State?
-    // destination이 nil이 아니면 sheet가 표시됨
-  }
-  
-  enum Action {
-    case destination(PresentationAction<Destination.Action>)
-    case showDestination
-  }
-  
-  var body: some ReducerOf<Self> {
-    Reduce { state, action in
-      switch action {
-      case .showDestination:
-        state.destination = Destination.State()
-        // State 변경만으로 navigation 발생
-        return .none
-      }
-    }
-    .ifLet(\.$destination, action: \.destination) {
-      Destination()
-    }
-  }
-}
-```
+### Feature Folder Rules
 
----
+Each Feature must contain:
 
-# Testability
+Features/
+ ├── Diary/
+ │    ├── DiaryFeature.swift
+ │    ├── DiaryView.swift
+ │    ├── Components/
+ │    └── DiaryCoreData.swift (if needed)
+ │
+ ├── Habit/
+ ├── Mood/
+ ├── Tracker/
+ └── Settings/
 
-Every reducer must be fully testable using TestStore.
+### Important Rules
 
-- Reducers must not rely on global state.
-  
-- All dependencies must be injectable and mockable.
-  
-- State changes must be deterministic.
+1. Do NOT separate View / ViewModel / Model folders.
+2. Do NOT place Reducers in a separate folder.
+3. Each Feature owns its View, Reducer, and internal data logic.
+4. CoreData or data logic specific to a Feature lives inside that Feature.
+5. Shared UI components go to `Shared/Components`.
+6. Dependency clients go to `Core/Clients`.
+7. State in TCA should consist only of pure values. Avoid storing side effects, reference types, or non-deterministic data in state.
 
-**Example:**
-```swift
-@Test
-func testFetchData() async {
-  let store = TestStore(initialState: Feature.State()) {
-    Feature()
-  } withDependencies: {
-    // Mock dependency 주입
-    $0.apiClient.fetch = { "Mock Data" }
-  }
-  
-  await store.send(.fetchData)
-  await store.receive(\.dataLoaded) {
-    $0.data = "Mock Data"
-  }
-}
-```
+### Philosophy
 
----
+TCA is read by **Feature**, not by UI layer.
 
-# Geofencing-Specific Rules
-# 지오펜싱 프로젝트 특화 규칙
+When suggesting code or structure, always think:
+"Which Feature does this belong to?"
+Never:
+"Which View or ViewModel does this belong to?"
 
-- Location updates must be handled via LocationClient dependency.
-  
-- Geofence state changes must trigger actions, not direct mutations.
-  
-- Screen activation must be state-driven, not location-callback-driven.
-  
-- Background location updates must be cancellable effects.
-
----
-
-# Forbidden Patterns
-# 금지된 패턴
-
-- ❌ Do not create ObservableObject ViewModels
-  
-- ❌ Do not perform async work in Views
-  
-- ❌ Do not mutate state outside Reducer
-  
-- ❌ Do not use singletons
-  
-- ❌ Do not fetch data in initializers
