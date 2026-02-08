@@ -13,13 +13,13 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-//            TabView(selection: $store.page) {
-//                page1.tag(0)
-//                page2.tag(1)
-//                page3.tag(2)
-//            }
-//            .tabViewStyle(.page(indexDisplayMode: .always))
-//            .padding(.top, 20)
+            TabView(selection: $store.page) {
+                page1.tag(0)
+                page2.tag(1)
+                page3.tag(2)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .always))
+            .padding(.top, 20)
 
             Spacer()
 

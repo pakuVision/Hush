@@ -24,7 +24,7 @@ struct OnboardingFeature {
         var screenTimeStatusText: String?
     }
     
-    enum Action {
+    enum Action: BindableAction {
         case nextTapped
         case backTapped
         case skipTapped
@@ -33,6 +33,7 @@ struct OnboardingFeature {
         case screenTimeAuthResponse(Result<ScreenTimeAuthorizationState, Error>)
         case delegate(Delegate)
         
+        case binding(BindingAction<State>)
         enum Delegate {
             case finished
         }
@@ -42,6 +43,9 @@ struct OnboardingFeature {
     @Dependency(\.userDefaultsClient) var userDefaultsClient
     
     var body: some Reducer<State, Action> {
+        
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
                 
@@ -95,6 +99,8 @@ struct OnboardingFeature {
                 return .none
                 
             case .delegate:
+                return .none
+            case .binding:
                 return .none
             }
         }
