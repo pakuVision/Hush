@@ -15,10 +15,12 @@ struct AppView: View {
         switch store.route {
         case .splash:
             SplashView()
-                .onAppear {
-                    store.send(.onAppear)
-                }
+                .onAppear { store.send(.onAppear) }
 
+        case .onboarding:
+            if let onboardingStore = store.scope(state: \.route.onboarding, action: \.onboarding) {
+                OnboardingView(store: onboardingStore)
+            }
         case .cardList:
             if let cardListStore = store.scope(state: \.route.cardList, action: \.cardList) {
                 CardListView(store: cardListStore)

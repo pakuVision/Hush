@@ -26,9 +26,7 @@ struct CardListFeature {
         var locationAuthStatus: CLAuthorizationStatus?
         
     }
-    
-    
-    
+
     enum Action {
         case task
         case addButtonTapped

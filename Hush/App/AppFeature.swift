@@ -18,15 +18,22 @@ struct AppFeature {
 
         enum Route: Equatable {
             case splash
+            case onboarding(OnboardingFeature.State)
             case cardList(CardListFeature.State)
         }
     }
 
     enum Action {
         case onAppear
+        case decideInitialRoute
+        case showOnboarding
         case showCardList
+        
+        case onboarding(OnboardingFeature.Action)
         case cardList(CardListFeature.Action)
     }
+    
+    @Dependency(\.userDefaultsClient) var userDefaultsClient
 
     var body: some Reducer<State, Action> {
         Reduce { state, action in
@@ -34,10 +41,27 @@ struct AppFeature {
             case .onAppear:
                 return .run { send in
                     try await Task.sleep(for: .seconds(0.5))
-                    await send(.showCardList)
+                    await send(.decideInitialRoute)
                 }
+                
+            case .decideInitialRoute:
+                return .run { send in
+                    let done = try await userDefaultsClient.isOnboardingDone()
+                    await send(done ? .showCardList : .showOnboarding)
+                }
+            case .showOnboarding:
+                state.route = .onboarding(OnboardingFeature.State())
+                return .none
             case .showCardList:
                 state.route = .cardList(CardListFeature.State())
+                return .none
+                
+            // onBoarding Delegate
+            case .onboarding(.delegate(.finished)):
+                state.route = .cardList(CardListFeature.State())
+                return .none
+                
+            case .onboarding:
                 return .none
             case .cardList:
                 // CardListのアクションはここで処理しない
@@ -46,6 +70,9 @@ struct AppFeature {
         }
         .ifLet(\.route.cardList, action: \.cardList) {
             CardListFeature()
+        }
+        .ifLet(\.route.onboarding, action: \.onboarding) {
+            OnboardingFeature()
         }
     }
 }
@@ -63,4 +90,16 @@ extension AppFeature.State.Route {
             self = .cardList(newValue)
         }
     }
+    
+    var onboarding: OnboardingFeature.State? {
+        get {
+                    guard case .onboarding(let state) = self else { return nil }
+                    return state
+                }
+                set {
+                    guard let newValue = newValue else { return }
+                    self = .onboarding(newValue)
+                }
+    }
 }
+
