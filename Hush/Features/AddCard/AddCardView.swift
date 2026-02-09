@@ -7,55 +7,163 @@
 
 import SwiftUI
 import MapKit
+import FamilyControls
 import ComposableArchitecture
+import ManagedSettings
 
 struct AddCardView: View {
     @Bindable var store: StoreOf<AddCardFeature>
 
+    // FamilyActivitySelectionはEquatableではないためViewで管理
+    @State private var activitySelection = FamilyActivitySelection()
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                TextField("タイトル", text: $store.title)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal)
+            ScrollView {
+                VStack(spacing: 20) {
+                    TextField("タイトル", text: $store.title)
+                        .textFieldStyle(.roundedBorder)
+                        .padding(.horizontal)
 
-                if store.isLoadingMap {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.15))
+                    if store.isLoadingMap {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.15))
+                            .aspectRatio(1.0, contentMode: .fit)
+                            .padding(.horizontal)
+                            .overlay {
+                                ProgressView("現在地を取得中...")
+                            }
+                    } else {
+                        // 地図（正方形）
+                        MapViewContainer(
+                            mapCenter: store.mapCenter,
+                            selectedCoordinate: store.selectedCoordinate,
+                            selectedAddress: store.selectedAddress,
+                            isLoadingAddress: store.isLoadingAddress,
+                            onMapTapped: { coordinate in
+                                store.send(.mapTapped(coordinate))
+                            }
+                        )
                         .aspectRatio(1.0, contentMode: .fit)
-                    
-                    ProgressView("現在地を取得中...")
-                } else {
-                    // 地図（正方形）
-                    MapViewContainer(
-                        mapCenter: store.mapCenter,
-                        selectedCoordinate: store.selectedCoordinate,
-                        selectedAddress: store.selectedAddress,
-                        isLoadingAddress: store.isLoadingAddress,
-                        onMapTapped: { coordinate in
-                            store.send(.mapTapped(coordinate))
+                        .padding(.horizontal)
+                    }
+
+                    // ブロック対象アプリ・カテゴリセクション
+                    BlockTargetSection(
+                        applicationTokens: store.selectedApplicationTokens,
+                        categoryTokens: store.selectedCategoryTokens,
+                        onSelectTapped: {
+                            store.send(.selectActivitiesButtonTapped)
                         }
                     )
-                    .aspectRatio(1.0, contentMode: .fit)
                     .padding(.horizontal)
-                }
-                
 
-                Spacer()
-
-                Button("保存") {
-                    store.send(.saveButtonTapped)
+                    Button("保存") {
+                        store.send(.saveButtonTapped)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(store.title.isEmpty || store.selectedCoordinate == nil)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(store.title.isEmpty || store.selectedCoordinate == nil)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
             .navigationTitle("新しいエリアを追加")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 store.send(.onAppear)
+            }
+            .familyActivityPicker(
+                isPresented: $store.isActivityPickerPresented,
+                selection: $activitySelection
+            )
+            .onChange(of: activitySelection) { _, newSelection in
+                // 選択内容が変わったときだけStoreに送信
+                store.send(.activitySelectionChanged(newSelection))
+            }
+        }
+    }
+}
+
+// MARK: - Block Target Section
+
+struct BlockTargetSection: View {
+    let applicationTokens: Set<ApplicationToken>
+    let categoryTokens: Set<ActivityCategoryToken>
+    let onSelectTapped: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("ブロック対象")
+                .font(.headline)
+
+            if applicationTokens.isEmpty && categoryTokens.isEmpty {
+                // 未選択状態
+                Button(action: onSelectTapped) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.blue)
+                        Text("アプリ・カテゴリを選択")
+                            .foregroundColor(.blue)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                }
+            } else {
+                // 選択済みアイコン一覧
+                VStack(alignment: .leading, spacing: 8) {
+                    if !categoryTokens.isEmpty {
+                        Text("カテゴリ")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        // FamilyControlsのLabelでカテゴリアイコンを表示
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible()), count: 5),
+                            spacing: 12
+                        ) {
+                            ForEach(Array(categoryTokens), id: \.self) { token in
+                                Label(token)
+                                    .labelStyle(.iconOnly)
+                                    .font(.system(size: 36))
+                            }
+                        }
+                    }
+
+                    if !applicationTokens.isEmpty {
+                        Text("アプリ")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        // FamilyControlsのLabelでアプリアイコンを表示
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible()), count: 5),
+                            spacing: 12
+                        ) {
+                            ForEach(Array(applicationTokens), id: \.self) { token in
+                                Label(token)
+                                    .labelStyle(.iconOnly)
+                                    .font(.system(size: 36))
+                            }
+                        }
+                    }
+
+                    // 追加ボタン
+                    Button(action: onSelectTapped) {
+                        Label("変更", systemImage: "pencil")
+                            .font(.subheadline)
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.secondarySystemBackground))
+                )
             }
         }
     }

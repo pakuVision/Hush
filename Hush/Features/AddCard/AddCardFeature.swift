@@ -7,7 +7,9 @@
 
 import Foundation
 import CoreLocation
+import FamilyControls
 import ComposableArchitecture
+import ManagedSettings
 
 @Reducer
 struct AddCardFeature {
@@ -17,9 +19,15 @@ struct AddCardFeature {
         var selectedCoordinate: Coordinate?
         var selectedAddress: String?
         var isLoadingAddress: Bool = false
-        
+
         var mapCenter: Coordinate?
         var isLoadingMap: Bool = true
+
+        // ブロック対象アプリ・カテゴリ
+        // FamilyActivitySelectionはEquatableではないためトークンに分けて保持
+        var isActivityPickerPresented: Bool = false
+        var selectedApplicationTokens: Set<ApplicationToken> = []
+        var selectedCategoryTokens: Set<ActivityCategoryToken> = []
     }
 
     enum Action: BindableAction {
@@ -28,6 +36,9 @@ struct AddCardFeature {
         case currentLocationFetched(Result<Coordinate, Error>)
         case mapTapped(Coordinate)
         case addressFetched(Result<String, Error>)
+        case selectActivitiesButtonTapped
+        // ViewのFamilyActivitySelectionからトークンを受け取る
+        case activitySelectionChanged(FamilyActivitySelection)
         case saveButtonTapped
         case delegate(Delegate)
 
@@ -99,6 +110,18 @@ struct AddCardFeature {
                 state.isLoadingAddress = false
                 state.selectedAddress = "주소를 가져올 수 없습니다"
                 print("❌ Geocode error: \(error)")
+                return .none
+
+            case .selectActivitiesButtonTapped:
+                // アクティビティピッカーを表示
+                state.isActivityPickerPresented = true
+                return .none
+
+            case let .activitySelectionChanged(selection):
+                // ViewからFamilyActivitySelectionを受け取りトークンに分解
+                state.selectedApplicationTokens = selection.applicationTokens
+                state.selectedCategoryTokens = selection.categoryTokens
+                state.isActivityPickerPresented = false
                 return .none
 
             case .saveButtonTapped:
